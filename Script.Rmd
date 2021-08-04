@@ -1,0 +1,42 @@
+---
+title: "CAIR 2021"
+author: "Randall"
+date: "`r format(Sys.time(), '%Y-%B-%d')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load up necessary packages up front so that if you hand this code off to a
+# coworker, it will fail at the beginning of the script
+library(tidyverse)
+library(janitor)
+
+```
+
+
+
+```{r}
+# Read in the first data set that will be used within the report
+data <- 
+  read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data.csv")
+
+# Read in the second data set that will be used within the report
+data_2 <- read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data_2.csv")
+  
+```
+
+
+```{r}
+# Append the data together 
+data_raw <- 
+  data %>% 
+  bind_rows(data_2)
+
+```
+
+
+
