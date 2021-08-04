@@ -11,9 +11,29 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # Load up necessary packages up front so that if you hand this code off to a
-# coworker, it will fail at the beginning of the script
-library(tidyverse)
-library(janitor)
+# coworker, it will fail at the beginning of the script.
+
+# There are a few options you have to load up packages. The first is to use the function (library())
+
+# library(tidyverse)
+# library(janitor)
+
+# There is another option that we reuse over and over. 
+
+# Create a logical check to see if the package *pacman* has been installed. 
+# If it has not been installed, then R will install it.
+
+if(!require(pacman)) install.packages("pacman")
+
+# Then using one of the functions (p_load()) within the package *pacman* we load the packages we want to use
+
+pacman::p_load(tidyverse, lubridate, janitor)
+
+# Some of our favorite packages to use within data analysis, but are not using today:
+# tidyverse, lubridate, readxl, janitor, plotly, reactable, DT, scales, tidygeocoder, here
+
+# Set theme for better visualization
+theme_set(theme_light())
 
 ```
 
@@ -21,22 +41,77 @@ library(janitor)
 
 ```{r}
 # Read in the first data set that will be used within the report
+# We will use the function (read_csv()) from the package *readr*
+
 data <- 
-  read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data.csv")
+  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data.csv")
 
 # Read in the second data set that will be used within the report
-data_2 <- read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data_2.csv")
+# We will use the function (read_csv()) from the package *readr*
+
+data_2 <- 
+  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data_2.csv")
   
 ```
 
 
 ```{r}
-# Append the data together 
+# Append the data together using the function (bind_rows()) from the package (dplyr)
+
 data_raw <- 
   data %>% 
-  bind_rows(data_2)
+  dplyr::bind_rows(data_2)
+
+# Do a quick check and ensure that the data was appended properly
+# R is a great tool and has a lot of cool features, such as a calculator already built in
+
+5998 + 6316
+
+# Or you can use the function (nrow) for each dataset and add the two together
+
+# nrow(data) + nrow(data_2)
+
+# Double check that the two match
+# (5998 + 6316) == nrow(data) + nrow(data_2)
 
 ```
 
 
+```{r}
+# After verifying you have all of the data within the completed dataset we can clean up the names of the columns
+# We will do this by using the function (clean_names()) from the package *janitor* 
+
+data_clean <- 
+  data_raw %>% 
+  janitor::clean_names()
+
+# The function (clean_names()) is great for cleaning up messy column names that are not structured very well
+
+# Let's look at at the first 6 columns to compare what the column names looked like prior 
+
+data_raw %>% 
+  dplyr::select(1:6)
+
+# This is what they transformed into
+
+data_clean %>% 
+  dplyr::select(1:6)
+
+# Much cleaner names, easier to read, and replaced capital letters with lowercase and _ to connect words
+
+```
+
+
+```{r}
+# Now we will look at the column types using the function (glimpse()) from the package *dplyr*  
+
+data_clean %>% 
+  dplyr::glimpse()
+
+# We can see that age is a dbl, hs_gpa is a chr.
+# These data types are some of the most common ones 
+# Another common one is Date, which we would suggest looking into the package (lubridate)
+
+
+```
 
