@@ -112,6 +112,96 @@ data_clean %>%
 # These data types are some of the most common ones 
 # Another common one is Date, which we would suggest looking into the package (lubridate)
 
+# We can see that hs_gpa column is classified as a character, but we want to convert it to a factor
+
+# We can convert the variable into a factor by using the function (mutate()) from the package *dplyr*
+
+data_clean <- 
+  data_clean %>% 
+  dplyr::mutate(hs_gpa = factor(hs_gpa)) 
+
+# We can now see that the hs_gpa column has now been reclassified as a factor
+
+data_clean %>% 
+  dplyr::glimpse()
+
+# Factors are classified by their ranking. Let's look at the levels of the hs_gpa column that we just converted
+# into a factor is leveled.
+
+levels(data_clean$hs_gpa)
+
+# We can write out the levels by hand if we want them in a certain order. Let's assign an object to classify it correctly. 
+
+levels <- 
+  c("0.0-.4",  "1.5-1.9", "2.0-2.4", "2.5-2.9", "3.0-3.4", "3.5-4.0", "> 4.0", "Unknown")
+
+# We want to classify them into the correct order (lowest to highest) by using an argument from the function (factor())
+
+data_clean <- 
+  data_clean %>% 
+  dplyr::mutate(hs_gpa = factor(hs_gpa, level = levels)) 
+
+# Verify that they are now in the correct order.
+
+levels(data_clean$hs_gpa)
 
 ```
+
+
+
+```{r}
+# Let's do some basic graphs to explore the data. 
+
+
+
+
+```
+
+
+```{r}
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+
+```
+
+
+```{r}
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+
+
+
+```
+
 
