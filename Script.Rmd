@@ -1,5 +1,5 @@
 ---
-title: "CAIR 2021"
+title: "CAIR 2021 - Building a Reproducible Equity Report in R"
 author: "Randall"
 date: "`r format(Sys.time(), '%Y-%B-%d')`"
 output: html_document
@@ -148,11 +148,136 @@ levels(data_clean$hs_gpa)
 ```
 
 
+```{r}
+
+# We will create a summarized dataset by a few different categories that we are interested in exploring further
+# We picked out age, hs_gpa, comp_sex, and ethnicity
+
+data_summarized <- 
+data_clean %>% 
+  group_by(age, hs_gpa, comp_sex, ethnicity) %>% 
+  summarize(total = n()) %>% 
+  ungroup() %>% 
+  mutate(age = as.character(age)) %>% 
+  tidyr::pivot_wider(names_from = comp_sex, values_from = total, values_fill = 0) %>% 
+  mutate(total = Male + Female + Unknown) %>% 
+  clean_names()
+  
+
+```
+
+
+
+
+
 
 ```{r}
 # Let's do some basic graphs to explore the data. 
 
 
+# We can summarize the age column to understand the distribution and remove na values
+
+age_summarized <- 
+data_summarized %>% 
+  group_by(age) %>% 
+  summarize(male = sum(male),
+            female = sum(female),
+            unknown = sum(unknown),
+            total = sum(total)) %>% 
+  ungroup() %>% 
+  filter(!is.na(age))
+
+# Plot the age category to see the distribution of ages
+
+age_summarized %>% 
+  ggplot(aes(age, total)) +
+  geom_col()
+
+
+# Once we have the totals for each category, we can see if the distribution varies between male and female
+
+age_summarized %>% 
+  pivot_longer(!age, names_to = "gender", values_to = "value") %>% 
+  filter(gender %in% c("male", "female")) %>% 
+  ggplot(aes(age, value, fill = gender)) +
+  geom_col() +
+  facet_wrap(~ gender) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(labels = comma) +
+  labs(x = "Age", 
+       y = "")
+
+
+```
+
+
+```{r}
+# Sex gpa groupings
+
+gpa_gender_summarized <- 
+  data_summarized %>% 
+  select(hs_gpa, male, female) %>% 
+  group_by(hs_gpa) %>% 
+  summarize(male = sum(male),
+            female = sum(female)) %>% 
+  filter(hs_gpa != "Unknown")
+
+
+gpa_gender_summarized %>% 
+  gather(gender, value, !hs_gpa) %>% 
+  ggplot(aes(hs_gpa, value, fill = gender)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = comma) +
+  labs(x = "HS GPA",
+       y = "Count",
+       fill = "Gender",
+       title = "Distribution of HS GPA by gender")
+
+
+```
+
+
+
+```{r}
+
+# Ethnicity gpa and gender groupings
+
+gpa_ethnicity_gender_summarized <- 
+  data_summarized %>% 
+  select(hs_gpa:female) %>% 
+  group_by(ethnicity, hs_gpa) %>% 
+  summarize(male = sum(male),
+            female = sum(female)) %>% 
+  ungroup() %>% 
+  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown")
+
+
+gpa_ethnicity_gender_summarized %>% 
+  pivot_longer(cols = male:female, names_to = "gender", values_to = "count") %>% 
+  ggplot(aes(hs_gpa, count, fill = gender)) + 
+  geom_col(position = "dodge") + 
+  facet_wrap(~ ethnicity, scales = "free_y") +
+  scale_y_continuous(labels = comma) +
+  labs(x = "HS GPA",
+       y = "Count",
+       fill = "Gender",
+       title = "Distribution of HS GPA by Ethnicity and Gender",
+       subtitle = "Scale of count is determined by each ethnicity to view distributions")
+
+
+```
+
+
+
+
+# Create another dataset to show the proportion of sex/ethnicity based on PERIOD
+# Create a new column that will break up the PERIOD column into the respective years
+
+
+```{r}
+
+
+
 
 
 ```
@@ -163,41 +288,42 @@ levels(data_clean$hs_gpa)
 
 
 
-```
-
-
-
-```{r}
-
-
-
-
 
 ```
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Archive
+
 ```{r}
-
-
-
-
-
-```
-
-
-```{r}
-
-
-
-
-
-```
-
-
-
-```{r}
-
+# code to replace all columns that are na with 0 
+replace(., is.na(.), 0)
 
 
 
