@@ -2,7 +2,9 @@
 title: "CAIR 2021 - Building a Reproducible Equity Report in R"
 author: "Randall"
 date: "`r format(Sys.time(), '%Y-%m-%d')`"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 ---
 
 ```{r setup, include=FALSE}
@@ -164,7 +166,7 @@ data_summarized <-
 
 
 
-```{r}
+```{r, out.width= "100%", out.height= "100%"}
 # Let's do some basic graphs to explore the data.
 
 
@@ -196,7 +198,7 @@ age_summarized %>%
   filter(gender %in% c("male", "female")) %>%
   ggplot(aes(age, value, fill = gender)) +
   geom_col() +
-  facet_wrap(~gender) +
+  facet_wrap(~gender, ncol = 1) +
   theme(legend.position = "none") +
   scale_y_continuous(labels = comma) +
   labs(
@@ -206,8 +208,8 @@ age_summarized %>%
 ```
 
 
-```{r}
-# Sex gpa groupings
+```{r, out.width= "100%", out.height= "100%"}
+# First we will need to get the data into a better format to see how gender and hs gpa is distributed
 
 gpa_gender_summarized <-
   data_summarized %>%
@@ -219,6 +221,7 @@ gpa_gender_summarized <-
   ) %>%
   filter(hs_gpa != "Unknown")
 
+# If we look at only male/female within the data we can see the distribution 
 
 gpa_gender_summarized %>%
   gather(gender, value, !hs_gpa) %>%
@@ -235,9 +238,11 @@ gpa_gender_summarized %>%
 
 
 
-```{r}
+```{r, out.width= "100%", out.height= "100%"}
 
-# Ethnicity gpa and gender groupings
+# Now we will look at how to summarize gender and ethnicity based on hs gpa
+# First we need to summarize the data similar to the prior graph
+
 
 gpa_ethnicity_gender_summarized <-
   data_summarized %>%
@@ -250,6 +255,7 @@ gpa_ethnicity_gender_summarized <-
   ungroup() %>%
   filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown")
 
+# Once the data is in the correct format, let's plot the data and explore the distribution based on ethnicity
 
 gpa_ethnicity_gender_summarized %>%
   pivot_longer(cols = male:female, names_to = "gender", values_to = "count") %>%
@@ -257,11 +263,71 @@ gpa_ethnicity_gender_summarized %>%
   geom_col(position = "dodge") +
   facet_wrap(~ethnicity, scales = "free_y") +
   scale_y_continuous(labels = comma) +
+  theme(
+    axis.text.x = element_text(angle = 70, vjust = 0.5, hjust = 1, size = 5),
+    axis.text.y = element_text(size = 5)
+  ) +
   labs(
-    x = "HS GPA",
-    y = "Count",
+    x = "",
+    y = "",
     fill = "Gender",
     title = "Distribution of HS GPA by Ethnicity and Gender",
     subtitle = "Scale of count is determined by each ethnicity to view distributions"
+  )
+```
+
+
+```{r, out.width= "100%", out.height= "100%"}
+
+# We have seen how the distribution appears between ethnicity and gender, but we should explore 
+# if the performance has changed over time
+
+# Let's go back to the original data_clean version and create a few new columns
+
+
+gpa_ethnicity_gender_year <-
+  data_clean %>%
+  extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>%
+  group_by(age, hs_gpa, comp_sex, ethnicity, year) %>%
+  summarize(total = n()) %>%
+  ungroup() %>%
+  mutate(age = as.character(age)) %>%
+  tidyr::pivot_wider(names_from = comp_sex, values_from = total, values_fill = 0) %>%
+  mutate(total = Male + Female + Unknown) %>%
+  clean_names()
+
+# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it 
+
+gpa_ethnicity_gender_year_summarized <-
+  gpa_ethnicity_gender_year %>%
+  select(hs_gpa:female) %>%
+  group_by(ethnicity, hs_gpa, year) %>%
+  summarize(
+    male = sum(male),
+    female = sum(female)
+  ) %>%
+  ungroup() %>%
+  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown")
+
+# After some exploration here are some findings within the data
+# we can see that Hispanic males and females has been trending higher in the count of students
+# The data appears to have some peaks within 2009 especially for African American males and females
+# White students have been trending downwards for the last few years
+
+gpa_ethnicity_gender_year_summarized %>%
+  pivot_longer(cols = male:female, names_to = "gender", values_to = "count") %>%
+  ggplot(aes(year, count, group = hs_gpa, color = hs_gpa)) +
+  geom_line() +
+  facet_wrap(~ ethnicity + gender, scales = "free_y", labeller = labeller(group = label_wrap_gen(width = 50))) +
+  scale_y_continuous(labels = comma) +
+  theme(
+    axis.text.x = element_text(angle = 70, vjust = 0.5, hjust = 1, size = 5),
+    axis.text.y = element_text(size = 5)
+  ) +
+  labs(
+    x = "Year",
+    y = "",
+    color = "HS GPA",
+    title = "Time Series of HS GPA by Ethnicity and Gender"
   )
 ```
