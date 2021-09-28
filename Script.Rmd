@@ -42,14 +42,14 @@ library(scales)
 # Read in the first data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-# data <-
-#   readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA.csv")
+data <-
+  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA.csv")
 
 # Read in the second data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-data <-
-  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA_2.csv")
+# data <-
+#   readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA_2.csv")
 ```
 
 
