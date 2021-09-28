@@ -25,6 +25,10 @@ knitr::opts_chunk$set(
 # Load up necessary packages up front so that if you hand this code off to a
 # coworker, it will fail at the beginning of the script.
 
+# First we will install the necessary packages
+
+install.packages(c("tidyverse", "janitor", "lubridate", "scales"))
+
 # There are a few options you have to load up packages. However, we will use the function (library()) to load the necessary packages.
 
 library(tidyverse)
