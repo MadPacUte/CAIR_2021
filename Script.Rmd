@@ -7,77 +7,65 @@ output:
     code_folding: hide
 ---
 
+
+
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+# Rmarkdown defaults when knitted
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
 ```
+
+### Install and Load Packages
 
 ```{r}
 # Load up necessary packages up front so that if you hand this code off to a
 # coworker, it will fail at the beginning of the script.
 
-# There are a few options you have to load up packages. The first is to use the function (library())
+# There are a few options you have to load up packages. However, we will use the function (library()) to load the necessary packages.
 
-# library(tidyverse)
-# library(janitor)
-
-# There is another option that we reuse over and over.
-
-# Create a logical check to see if the package *pacman* has been installed.
-# If it has not been installed, then R will install it.
-
-if (!require(pacman)) install.packages("pacman")
-
-# Then using one of the functions (p_load()) within the package *pacman* we load the packages we want to use
-
-pacman::p_load(tidyverse, lubridate, janitor, scales)
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(scales)
 
 # Some of our favorite packages to use within data analysis, but are not using today:
-# tidyverse, lubridate, readxl, janitor, plotly, reactable, DT, scales, tidygeocoder, here
-
-# Set theme for better visualization
-theme_set(theme_light())
+# readxl, plotly, reactable, DT, scales, tidygeocoder, here
 ```
 
-
+### Read in data
 
 ```{r}
 # Read in the first data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-data <-
-  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data.csv")
+# data <-
+#   readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA.csv")
 
 # Read in the second data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-data_2 <-
-  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_Data_2.csv")
+data <-
+  readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA_2.csv")
 ```
 
 
+
 ```{r}
-# Append the data together using the function (bind_rows()) from the package (dplyr)
+# We are going to read in a different dataset
+# However, for now we will assign it as a new object called data_raw
 
 data_raw <-
-  data %>%
-  dplyr::bind_rows(data_2)
-
-# Do a quick check and ensure that the data was appended properly
-# R is a great tool and has a lot of cool features, such as a calculator already built in
-
-5998 + 6316
-
-# Or you can use the function (nrow) for each dataset and add the two together
-
-# nrow(data) + nrow(data_2)
-
-# Double check that the two match
-# (5998 + 6316) == nrow(data) + nrow(data_2)
+  data
 ```
 
+### Data Cleaning
 
 ```{r}
-# After verifying you have all of the data within the completed dataset we can clean up the names of the columns
+# We can clean up the names of the columns to get them all in the same format
 # We will do this by using the function (clean_names()) from the package *janitor*
 
 data_clean <-
@@ -99,6 +87,7 @@ data_clean %>%
 # Much cleaner names, easier to read, and replaced capital letters with lowercase and _ to connect words
 ```
 
+### Explore Data Types
 
 ```{r}
 # Now we will look at the column types using the function (glimpse()) from the package *dplyr*
@@ -145,189 +134,173 @@ levels(data_clean$hs_gpa)
 ```
 
 
-```{r}
 
+```{r}
 # We will create a summarized dataset by a few different categories that we are interested in exploring further
-# We picked out age, hs_gpa, comp_sex, and ethnicity
+# We picked out age, hs_gpa, and ethnicity
 
 data_summarized <-
-  data_clean %>%
-  group_by(age, hs_gpa, comp_sex, ethnicity) %>%
-  summarize(total = n()) %>%
-  ungroup() %>%
-  mutate(age = as.character(age)) %>%
-  tidyr::pivot_wider(names_from = comp_sex, values_from = total, values_fill = 0) %>%
-  mutate(total = Male + Female + Unknown) %>%
-  clean_names()
+  data_clean %>% # take the dataset
+  group_by(age, hs_gpa, ethnicity) %>% # group the data by the categories
+  summarize(total = n()) %>% # condense the data
+  ungroup() %>% # remove the group by
+  mutate(age = as.character(age)) %>% # modify the age column to character type
+  clean_names() # reformatting the columns 
 ```
 
-
-
-
-
+### Basic EDA (Exploratory Data Analysis)
 
 ```{r, out.width= "100%", out.height= "100%"}
 # Let's do some basic graphs to explore the data.
 
+# Set theme for better visualization
+theme_set(theme_bw())
 
 # We can summarize the age column to understand the distribution and remove na values
 
 age_summarized <-
-  data_summarized %>%
-  group_by(age) %>%
+  data_summarized %>% # take the summarized data
+  group_by(age) %>% # group the data by age
   summarize(
-    male = sum(male),
-    female = sum(female),
-    unknown = sum(unknown),
-    total = sum(total)
+    total = sum(total) # add up all of the counts by the grouping 
   ) %>%
-  ungroup() %>%
-  filter(!is.na(age))
+  ungroup() %>% # remove the group by
+  filter(!is.na(age)) # filter out any missing age values
 
 # Plot the age category to see the distribution of ages
 
-age_summarized %>%
-  ggplot(aes(age, total)) +
-  geom_col()
-
-
-# Once we have the totals for each category, we can see if the distribution varies between male and female
-
-age_summarized %>%
-  pivot_longer(!age, names_to = "gender", values_to = "value") %>%
-  filter(gender %in% c("male", "female")) %>%
-  ggplot(aes(age, value, fill = gender)) +
-  geom_col() +
-  facet_wrap(~gender, ncol = 1) +
-  theme(legend.position = "none") +
-  scale_y_continuous(labels = comma) +
+age_summarized %>% # take the summarized age dataset
+  ggplot(aes(age, total)) + # initially plot the x and y coordinates
+  geom_col() + # create a column chart
+  scale_y_continuous(labels = comma) + # change the y labels to have commas
   labs(
-    x = "Age",
-    y = ""
-  )
-```
-
-
-```{r, out.width= "100%", out.height= "100%"}
-# First we will need to get the data into a better format to see how gender and hs gpa is distributed
-
-gpa_gender_summarized <-
-  data_summarized %>%
-  select(hs_gpa, male, female) %>%
-  group_by(hs_gpa) %>%
-  summarize(
-    male = sum(male),
-    female = sum(female)
-  ) %>%
-  filter(hs_gpa != "Unknown")
-
-# If we look at only male/female within the data we can see the distribution 
-
-gpa_gender_summarized %>%
-  gather(gender, value, !hs_gpa) %>%
-  ggplot(aes(hs_gpa, value, fill = gender)) +
-  geom_col(position = "dodge") +
-  scale_y_continuous(labels = comma) +
-  labs(
-    x = "HS GPA",
-    y = "Count",
-    fill = "Gender",
-    title = "Distribution of HS GPA by gender"
+    x = "Age", # rename the x-axis label
+    y = "Count" # rename the y-axis label
   )
 ```
 
 
 
 ```{r, out.width= "100%", out.height= "100%"}
-
-# Now we will look at how to summarize gender and ethnicity based on hs gpa
+# Now we will look at how to summarize ethnicity based on hs gpa
 # First we need to summarize the data similar to the prior graph
 
-
-gpa_ethnicity_gender_summarized <-
-  data_summarized %>%
-  select(hs_gpa:female) %>%
-  group_by(ethnicity, hs_gpa) %>%
+gpa_ethnicity_summarized <-
+  data_summarized %>% # take the summarized dataset
+  select(hs_gpa:total) %>% # select the columns that we would like to look at
+  group_by(ethnicity, hs_gpa) %>% # group the data by ethnicity and hs gpa
   summarize(
-    male = sum(male),
-    female = sum(female)
+    total = sum(total) # add up all of the counts by the grouping
   ) %>%
-  ungroup() %>%
-  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown")
+  ungroup() %>% # remove the group by
+  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and hs gpa
 
 # Once the data is in the correct format, let's plot the data and explore the distribution based on ethnicity
 
-gpa_ethnicity_gender_summarized %>%
-  pivot_longer(cols = male:female, names_to = "gender", values_to = "count") %>%
-  ggplot(aes(hs_gpa, count, fill = gender)) +
-  geom_col(position = "dodge") +
-  facet_wrap(~ethnicity, scales = "free_y") +
-  scale_y_continuous(labels = comma) +
+gpa_ethnicity_summarized %>% # take the summarized gpa and ethnicity dataset
+  ggplot(aes(hs_gpa, total, fill = ethnicity)) + # initially plot the x and y coordinates and fill by ethnicity
+  geom_col(position = "dodge") + # create a clustered column chart
+  facet_wrap(~ethnicity, scales = "free_y") + # separate the ethnicity into their own charts while releasing the y axis to see differences between groups
+  scale_y_continuous(labels = comma) + # change the y labels to have commas
   theme(
-    axis.text.x = element_text(angle = 70, vjust = 0.5, hjust = 1, size = 5),
-    axis.text.y = element_text(size = 5)
+    axis.text.x = element_text(angle = 45, vjust = 0.5), # adjust the x axis text to not overlap
+    legend.position = "none"
   ) +
-  labs(
+  labs( # update the labels within the graph
     x = "",
     y = "",
-    fill = "Gender",
-    title = "Distribution of HS GPA by Ethnicity and Gender",
+    title = "Distribution of HS GPA by Ethnicity",
     subtitle = "Scale of count is determined by each ethnicity to view distributions"
   )
 ```
 
+### Final Chart
 
 ```{r, out.width= "100%", out.height= "100%"}
-
-# We have seen how the distribution appears between ethnicity and gender, but we should explore 
+# We have seen how the distribution appears between ethnicity and gender, but we should explore
 # if the performance has changed over time
 
 # Let's go back to the original data_clean version and create a few new columns
 
+gpa_ethnicity_year <-
+  data_clean %>% # take the cleaned dataset
+  extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>% # create two new columns using feature engineering
+  group_by(age, hs_gpa, ethnicity, year) %>% # group the data by age, hs gpa, ethnicity, and year
+  summarize(total = n()) %>% # add up all of the counts by the grouping
+  ungroup() %>% # remove the group by
+  mutate(age = as.character(age)) %>% # modify the age column to character type
+  clean_names() # reformatting the columns
 
-gpa_ethnicity_gender_year <-
-  data_clean %>%
-  extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>%
-  group_by(age, hs_gpa, comp_sex, ethnicity, year) %>%
-  summarize(total = n()) %>%
-  ungroup() %>%
-  mutate(age = as.character(age)) %>%
-  tidyr::pivot_wider(names_from = comp_sex, values_from = total, values_fill = 0) %>%
-  mutate(total = Male + Female + Unknown) %>%
-  clean_names()
+# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it
 
-# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it 
-
-gpa_ethnicity_gender_year_summarized <-
-  gpa_ethnicity_gender_year %>%
-  select(hs_gpa:female) %>%
-  group_by(ethnicity, hs_gpa, year) %>%
+gpa_ethnicity_year_summarized <-
+  gpa_ethnicity_year %>% # take the dataset we just created
+  select(hs_gpa:total) %>% # select the columns that we would like to look at
+  group_by(ethnicity, hs_gpa, year) %>% # group the data by ethnicity, hs gpa, and year
   summarize(
-    male = sum(male),
-    female = sum(female)
+    total = sum(total) # add up all of the counts by the grouping
   ) %>%
-  ungroup() %>%
-  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown")
+  ungroup() %>% # remove the group by
+  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and hs gpa
 
 # After some exploration here are some findings within the data
 # we can see that Hispanic males and females has been trending higher in the count of students
 # The data appears to have some peaks within 2009 especially for African American males and females
 # White students have been trending downwards for the last few years
 
-gpa_ethnicity_gender_year_summarized %>%
-  pivot_longer(cols = male:female, names_to = "gender", values_to = "count") %>%
-  ggplot(aes(year, count, group = hs_gpa, color = hs_gpa)) +
-  geom_line() +
-  facet_wrap(~ ethnicity + gender, scales = "free_y", labeller = labeller(group = label_wrap_gen(width = 50))) +
-  scale_y_continuous(labels = comma) +
+gpa_ethnicity_year_summarized %>% # take the summarized gpa, ethnicity, and year dataset
+  mutate(hs_gpa = fct_rev(hs_gpa)) %>% # reorder the legend so the rankings are in order
+  ggplot(aes(year, total, group = hs_gpa, color = hs_gpa)) + # initially plot the x and y coordinates and color by hs gpa
+  geom_line(size = 1) + # create a line chart
+  facet_wrap(~ethnicity, scales = "free_y", labeller = labeller(group = label_wrap_gen(width = 50))) +  # separate the ethnicity into their own charts while releasing the y axis to see differences between groups as well as ensure the names fit
+  scale_y_continuous(labels = comma) +  # change the y labels to have commas
   theme(
-    axis.text.x = element_text(angle = 70, vjust = 0.5, hjust = 1, size = 5),
-    axis.text.y = element_text(size = 5)
+    axis.text.x = element_text(angle = 45, vjust = 0.5) # adjust the x axis text to not overlap
   ) +
-  labs(
-    x = "Year",
+  labs( # update the labels within the graph
+    x = "",
     y = "",
     color = "HS GPA",
-    title = "Time Series of HS GPA by Ethnicity and Gender"
+    title = "Time Series of HS GPA by Ethnicity",
+    subtitle = "Count of students by year"
   )
 ```
+
+
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+# Archive
+
+# There is another option to load packages that we reuse in other scripts.
+
+# Create a logical check to see if the package *pacman* has been installed.
+# If it has not been installed, then R will install it.
+
+# if (!require(pacman)) install.packages("pacman")
+
+# Then using one of the functions (p_load()) within the package *pacman* we load the packages we want to use
+
+# pacman::p_load(tidyverse, lubridate, janitor, scales)
+
+## You can also merge datasets together using the function (bind_rows())
+
+# Append the data together using the function (bind_rows()) from the package (dplyr)
+
+# data_raw <-
+#   data %>%
+#   dplyr::bind_rows(data_2)
+
+# Do a quick check and ensure that the data was appended properly
+# R is a great tool and has a lot of cool features, such as a calculator already built in
+
+# 5998 + 6316
+
+# Or you can use the function (nrow) for each dataset and add the two together
+
+# nrow(data) + nrow(data_2)
+
+# Double check that the two match
+# (5998 + 6316) == nrow(data) + nrow(data_2)
+```
+
+
