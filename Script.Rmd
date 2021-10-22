@@ -99,27 +99,27 @@ data_clean %>%
 data_clean %>%
   dplyr::glimpse()
 
-# We can see that age is a dbl, hs_gpa is a chr.
+# We can see that age is a dbl, gpa is a chr.
 # These data types are some of the most common ones
 # Another common one is Date, which we would suggest looking into the package (lubridate)
 
-# We can see that hs_gpa column is classified as a character, but we want to convert it to a factor
+# We can see that gpa column is classified as a character, but we want to convert it to a factor
 
 # We can convert the variable into a factor by using the function (mutate()) from the package *dplyr*
 
 data_clean <-
   data_clean %>%
-  dplyr::mutate(hs_gpa = factor(hs_gpa))
+  dplyr::mutate(gpa = factor(gpa))
 
-# We can now see that the hs_gpa column has now been reclassified as a factor
+# We can now see that the gpa column has now been reclassified as a factor
 
 data_clean %>%
   dplyr::glimpse()
 
-# Factors are classified by their ranking. Let's look at the levels of the hs_gpa column that we just converted
+# Factors are classified by their ranking. Let's look at the levels of the gpa column that we just converted
 # into a factor is leveled.
 
-levels(data_clean$hs_gpa)
+levels(data_clean$gpa)
 
 # We can write out the levels by hand if we want them in a certain order. Let's assign an object to classify it correctly.
 
@@ -130,22 +130,22 @@ levels <-
 
 data_clean <-
   data_clean %>%
-  dplyr::mutate(hs_gpa = factor(hs_gpa, level = levels))
+  dplyr::mutate(gpa = factor(gpa, level = levels))
 
 # Verify that they are now in the correct order.
 
-levels(data_clean$hs_gpa)
+levels(data_clean$gpa)
 ```
 
 
 
 ```{r}
 # We will create a summarized dataset by a few different categories that we are interested in exploring further
-# We picked out age, hs_gpa, and ethnicity
+# We picked out age, gpa, and ethnicity
 
 data_summarized <-
   data_clean %>% # take the dataset
-  group_by(age, hs_gpa, ethnicity) %>% # group the data by the categories
+  group_by(age, gpa, ethnicity) %>% # group the data by the categories
   summarize(total = n()) %>% # condense the data
   ungroup() %>% # remove the group by
   mutate(age = as.character(age)) %>% # modify the age column to character type
@@ -186,23 +186,23 @@ age_summarized %>% # take the summarized age dataset
 
 
 ```{r, out.width= "100%", out.height= "100%"}
-# Now we will look at how to summarize ethnicity based on hs gpa
+# Now we will look at how to summarize ethnicity based on gpa
 # First we need to summarize the data similar to the prior graph
 
 gpa_ethnicity_summarized <-
   data_summarized %>% # take the summarized dataset
-  select(hs_gpa:total) %>% # select the columns that we would like to look at
-  group_by(ethnicity, hs_gpa) %>% # group the data by ethnicity and hs gpa
+  select(gpa:total) %>% # select the columns that we would like to look at
+  group_by(ethnicity, gpa) %>% # group the data by ethnicity and gpa
   summarize(
     total = sum(total) # add up all of the counts by the grouping
   ) %>%
   ungroup() %>% # remove the group by
-  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and hs gpa
+  filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
 
 # Once the data is in the correct format, let's plot the data and explore the distribution based on ethnicity
 
 gpa_ethnicity_summarized %>% # take the summarized gpa and ethnicity dataset
-  ggplot(aes(hs_gpa, total, fill = ethnicity)) + # initially plot the x and y coordinates and fill by ethnicity
+  ggplot(aes(gpa, total, fill = ethnicity)) + # initially plot the x and y coordinates and fill by ethnicity
   geom_col(position = "dodge") + # create a clustered column chart
   facet_wrap(~ethnicity, scales = "free_y") + # separate the ethnicity into their own charts while releasing the y axis to see differences between groups
   scale_y_continuous(labels = comma) + # change the y labels to have commas
@@ -213,7 +213,7 @@ gpa_ethnicity_summarized %>% # take the summarized gpa and ethnicity dataset
   labs( # update the labels within the graph
     x = "",
     y = "",
-    title = "Distribution of HS GPA by Ethnicity",
+    title = "Distribution of gpa by Ethnicity",
     subtitle = "Scale of count is determined by each ethnicity to view distributions"
   )
 ```
@@ -229,7 +229,7 @@ gpa_ethnicity_summarized %>% # take the summarized gpa and ethnicity dataset
 gpa_ethnicity_year <-
   data_clean %>% # take the cleaned dataset
   extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>% # create two new columns using feature engineering
-  group_by(age, hs_gpa, ethnicity, year) %>% # group the data by age, hs gpa, ethnicity, and year
+  group_by(age, gpa, ethnicity, year) %>% # group the data by age, gpa, ethnicity, and year
   summarize(total = n()) %>% # add up all of the counts by the grouping
   ungroup() %>% # remove the group by
   mutate(age = as.character(age)) %>% # modify the age column to character type
@@ -239,13 +239,13 @@ gpa_ethnicity_year <-
 
 gpa_ethnicity_year_summarized <-
   gpa_ethnicity_year %>% # take the dataset we just created
-  select(hs_gpa:total) %>% # select the columns that we would like to look at
-  group_by(ethnicity, hs_gpa, year) %>% # group the data by ethnicity, hs gpa, and year
+  select(gpa:total) %>% # select the columns that we would like to look at
+  group_by(ethnicity, gpa, year) %>% # group the data by ethnicity, gpa, and year
   summarize(
     total = sum(total) # add up all of the counts by the grouping
   ) %>%
   ungroup() %>% # remove the group by
-  filter(!is.na(ethnicity), ethnicity != "Unknown", hs_gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and hs gpa
+  filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
 
 # After some exploration here are some findings within the data
 # we can see that Hispanic males and females has been trending higher in the count of students
@@ -253,8 +253,8 @@ gpa_ethnicity_year_summarized <-
 # White students have been trending downwards for the last few years
 
 gpa_ethnicity_year_summarized %>% # take the summarized gpa, ethnicity, and year dataset
-  mutate(hs_gpa = fct_rev(hs_gpa)) %>% # reorder the legend so the rankings are in order
-  ggplot(aes(year, total, group = hs_gpa, color = hs_gpa)) + # initially plot the x and y coordinates and color by hs gpa
+  mutate(gpa = fct_rev(gpa)) %>% # reorder the legend so the rankings are in order
+  ggplot(aes(year, total, group = gpa, color = gpa)) + # initially plot the x and y coordinates and color by gpa
   geom_line(size = 1) + # create a line chart
   facet_wrap(~ethnicity, scales = "free_y", labeller = labeller(group = label_wrap_gen(width = 50))) +  # separate the ethnicity into their own charts while releasing the y axis to see differences between groups as well as ensure the names fit
   scale_y_continuous(labels = comma) +  # change the y labels to have commas
@@ -264,8 +264,8 @@ gpa_ethnicity_year_summarized %>% # take the summarized gpa, ethnicity, and year
   labs( # update the labels within the graph
     x = "",
     y = "",
-    color = "HS GPA",
-    title = "Time Series of HS GPA by Ethnicity",
+    color = "GPA",
+    title = "Time Series of gpa by Ethnicity",
     subtitle = "Count of students by year"
   )
 ```
