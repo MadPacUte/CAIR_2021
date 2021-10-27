@@ -46,25 +46,17 @@ library(scales)
 # Read in the first data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-data <-
+data_raw <-
   readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA.csv")
+  
 
 # Read in the second data set that will be used within the report
 # We will use the function (read_csv()) from the package *readr*
 
-# data <-
+# data_raw <-
 #   readr::read_csv("https://raw.githubusercontent.com/MadPacUte/CAIR_2021/main/CAIR_2021_DATA_2.csv")
 ```
 
-
-
-```{r}
-# We are going to read in a different dataset
-# However, for now we will assign it as a new object called data_raw
-
-data_raw <-
-  data
-```
 
 ### Data Cleaning
 
@@ -144,7 +136,7 @@ levels(data_clean$gpa)
 # We picked out age, gpa, and ethnicity
 
 data_summarized <-
-  data_clean %>% # take the dataset
+  data_clean %>% # take the cleaned dataset
   group_by(age, gpa, ethnicity) %>% # group the data by the categories
   summarize(total = n()) %>% # condense the data
   ungroup() %>% # remove the group by
@@ -152,77 +144,13 @@ data_summarized <-
   clean_names() # reformatting the columns 
 ```
 
-### Basic EDA (Exploratory Data Analysis)
 
-```{r, out.width= "100%", out.height= "100%"}
-# Let's do some basic graphs to explore the data.
-
-# Set theme for better visualization
-theme_set(theme_bw())
-
-# We can summarize the age column to understand the distribution and remove na values
-
-age_summarized <-
-  data_summarized %>% # take the summarized data
-  group_by(age) %>% # group the data by age
-  summarize(
-    total = sum(total) # add up all of the counts by the grouping 
-  ) %>%
-  ungroup() %>% # remove the group by
-  filter(!is.na(age)) # filter out any missing age values
-
-# Plot the age category to see the distribution of ages
-
-age_summarized %>% # take the summarized age dataset
-  ggplot(aes(age, total)) + # initially plot the x and y coordinates
-  geom_col() + # create a column chart
-  scale_y_continuous(labels = comma) + # change the y labels to have commas
-  labs(
-    x = "Age", # rename the x-axis label
-    y = "Count" # rename the y-axis label
-  )
-```
-
-
-
-```{r, out.width= "100%", out.height= "100%"}
-# Now we will look at how to summarize ethnicity based on gpa
-# First we need to summarize the data similar to the prior graph
-
-gpa_ethnicity_summarized <-
-  data_summarized %>% # take the summarized dataset
-  select(gpa:total) %>% # select the columns that we would like to look at
-  group_by(ethnicity, gpa) %>% # group the data by ethnicity and gpa
-  summarize(
-    total = sum(total) # add up all of the counts by the grouping
-  ) %>%
-  ungroup() %>% # remove the group by
-  filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
-
-# Once the data is in the correct format, let's plot the data and explore the distribution based on ethnicity
-
-gpa_ethnicity_summarized %>% # take the summarized gpa and ethnicity dataset
-  ggplot(aes(gpa, total, fill = ethnicity)) + # initially plot the x and y coordinates and fill by ethnicity
-  geom_col(position = "dodge") + # create a clustered column chart
-  facet_wrap(~ethnicity, scales = "free_y") + # separate the ethnicity into their own charts while releasing the y axis to see differences between groups
-  scale_y_continuous(labels = comma) + # change the y labels to have commas
-  theme(
-    axis.text.x = element_text(angle = 45, vjust = 0.5), # adjust the x axis text to not overlap
-    legend.position = "none"
-  ) +
-  labs( # update the labels within the graph
-    x = "",
-    y = "",
-    title = "Distribution of gpa by Ethnicity",
-    subtitle = "Scale of count is determined by each ethnicity to view distributions"
-  )
-```
 
 ### Final Chart
 
 ```{r, out.width= "100%", out.height= "100%"}
-# We have seen how the distribution appears between ethnicity and gender, but we should explore
-# if the performance has changed over time
+# Set theme for better visualization
+theme_set(theme_bw())
 
 # Let's go back to the original data_clean version and create a few new columns
 
@@ -257,7 +185,7 @@ gpa_ethnicity_year_summarized %>% # take the summarized gpa, ethnicity, and year
   ggplot(aes(year, total, group = gpa, color = gpa)) + # initially plot the x and y coordinates and color by gpa
   geom_line(size = 1) + # create a line chart
   facet_wrap(~ethnicity, scales = "free_y", labeller = labeller(group = label_wrap_gen(width = 50))) +  # separate the ethnicity into their own charts while releasing the y axis to see differences between groups as well as ensure the names fit
-  scale_y_continuous(labels = comma) +  # change the y labels to have commas
+  scale_y_continuous(labels = comma_format(accuracy = 1)) +  # change the y labels to have commas
   theme(
     axis.text.x = element_text(angle = 45, vjust = 0.5) # adjust the x axis text to not overlap
   ) +
