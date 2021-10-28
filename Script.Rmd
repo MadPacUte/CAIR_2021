@@ -129,42 +129,20 @@ data_clean <-
 levels(data_clean$gpa)
 ```
 
-### Create a summarized dataset
-
-```{r}
-# We will create a summarized dataset by a few different categories that we are interested in exploring further
-# We picked out age, gpa, and ethnicity
-
-data_summarized <-
-  data_clean %>% # take the cleaned dataset
-  group_by(age, gpa, ethnicity) %>% # group the data by the categories
-  summarize(total = n()) %>% # condense the data
-  ungroup() # remove the group by
-```
-
-### Create a new column in the dataset
+### Create a new summarized dataset
 
 ```{r}
 # Let's go back to the original data_clean version and create a few new columns
 
-gpa_ethnicity_year <-
+gpa_ethnicity_year_summarized <-
   data_clean %>% # take the cleaned dataset
   extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>% # create two new columns using feature engineering
-  group_by(age, gpa, ethnicity, year) %>% # group the data by age, gpa, ethnicity, and year
-  summarize(total = n()) %>% # add up all of the counts by the grouping
-  ungroup() # remove the group by
-
-# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it
-
-gpa_ethnicity_year_summarized <-
-  gpa_ethnicity_year %>% # take the new dataset we just created
-  select(gpa:total) %>% # select the columns that we would like to look at
   group_by(ethnicity, gpa, year) %>% # group the data by ethnicity, gpa, and year
-  summarize(
-    total = sum(total) # add up all of the counts by the grouping
-  ) %>%
+  summarize(total = n()) %>%  # add up all of the counts by the grouping
   ungroup() %>% # remove the group by
   filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
+
+# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it
 ```
 
 
