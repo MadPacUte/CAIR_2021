@@ -8,14 +8,13 @@ output:
 ---
 
 
-
 ```{r setup, include=FALSE}
 # Rmarkdown defaults when knitted
 
 knitr::opts_chunk$set(
-  echo = TRUE,
-  message = FALSE,
-  warning = FALSE
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
 )
 ```
 
@@ -27,13 +26,14 @@ knitr::opts_chunk$set(
 
 # First we will install the necessary packages
 
-install.packages(c("tidyverse", "janitor", "lubridate", "scales"))
+install.packages("tidyverse")
+install.packages("janitor")
+install.packages("scales")
 
 # There are a few options you have to load up packages. However, we will use the function (library()) to load the necessary packages.
 
 library(tidyverse)
 library(janitor)
-library(lubridate)
 library(scales)
 
 # Some of our favorite packages to use within data analysis, but are not using today:
@@ -58,7 +58,7 @@ data_raw <-
 ```
 
 
-### Data Cleaning
+### Initial Data Cleaning
 
 ```{r}
 # We can clean up the names of the columns to get them all in the same format
@@ -109,7 +109,7 @@ data_clean %>%
   dplyr::glimpse()
 
 # Factors are classified by their ranking. Let's look at the levels of the gpa column that we just converted
-# into a factor is leveled.
+# into a factor is leveled. The levels function is from base r. 
 
 levels(data_clean$gpa)
 
@@ -129,7 +129,7 @@ data_clean <-
 levels(data_clean$gpa)
 ```
 
-
+### Create a summarized dataset
 
 ```{r}
 # We will create a summarized dataset by a few different categories that we are interested in exploring further
@@ -139,11 +139,33 @@ data_summarized <-
   data_clean %>% # take the cleaned dataset
   group_by(age, gpa, ethnicity) %>% # group the data by the categories
   summarize(total = n()) %>% # condense the data
-  ungroup() %>% # remove the group by
-  mutate(age = as.character(age)) %>% # modify the age column to character type
-  clean_names() # reformatting the columns 
+  ungroup() # remove the group by
 ```
 
+### Create a new column in the dataset
+
+```{r}
+# Let's go back to the original data_clean version and create a few new columns
+
+gpa_ethnicity_year <-
+  data_clean %>% # take the cleaned dataset
+  extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>% # create two new columns using feature engineering
+  group_by(age, gpa, ethnicity, year) %>% # group the data by age, gpa, ethnicity, and year
+  summarize(total = n()) %>% # add up all of the counts by the grouping
+  ungroup() # remove the group by
+
+# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it
+
+gpa_ethnicity_year_summarized <-
+  gpa_ethnicity_year %>% # take the new dataset we just created
+  select(gpa:total) %>% # select the columns that we would like to look at
+  group_by(ethnicity, gpa, year) %>% # group the data by ethnicity, gpa, and year
+  summarize(
+    total = sum(total) # add up all of the counts by the grouping
+  ) %>%
+  ungroup() %>% # remove the group by
+  filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
+```
 
 
 ### Final Chart
@@ -152,33 +174,7 @@ data_summarized <-
 # Set theme for better visualization
 theme_set(theme_bw())
 
-# Let's go back to the original data_clean version and create a few new columns
-
-gpa_ethnicity_year <-
-  data_clean %>% # take the cleaned dataset
-  extract(period, into = c("year", "semester"), "(.{4})(.{1})") %>% # create two new columns using feature engineering
-  group_by(age, gpa, ethnicity, year) %>% # group the data by age, gpa, ethnicity, and year
-  summarize(total = n()) %>% # add up all of the counts by the grouping
-  ungroup() %>% # remove the group by
-  mutate(age = as.character(age)) %>% # modify the age column to character type
-  clean_names() # reformatting the columns
-
-# The data is now listed in a tidy format to explore over the years, but if we group the data we can plot it
-
-gpa_ethnicity_year_summarized <-
-  gpa_ethnicity_year %>% # take the dataset we just created
-  select(gpa:total) %>% # select the columns that we would like to look at
-  group_by(ethnicity, gpa, year) %>% # group the data by ethnicity, gpa, and year
-  summarize(
-    total = sum(total) # add up all of the counts by the grouping
-  ) %>%
-  ungroup() %>% # remove the group by
-  filter(!is.na(ethnicity), ethnicity != "Unknown", gpa != "Unknown") # filter out any missing ethnicity as well as unknown ethnicity and gpa
-
-# After some exploration here are some findings within the data
-# we can see that Hispanic males and females has been trending higher in the count of students
-# The data appears to have some peaks within 2009 especially for African American males and females
-# White students have been trending downwards for the last few years
+# Plot the chart
 
 gpa_ethnicity_year_summarized %>% # take the summarized gpa, ethnicity, and year dataset
   mutate(gpa = fct_rev(gpa)) %>% # reorder the legend so the rankings are in order
